@@ -7,12 +7,13 @@ import { webhookCallback } from 'grammy'
 import { getDayType, parseISODate, toISODate } from '../src/lib/calendar.js'
 import { searchDepartures, uniqueStations } from '../src/lib/schedule.js'
 import { routeOptions, sourceMetadata } from '../src/lib/scheduleData.js'
-import type { RouteId } from '../src/lib/types.js'
+import type { DayType, RouteId } from '../src/lib/types.js'
 import { createTelegramBot } from './bot.js'
 import type { AppConfig } from './config.js'
 import type { Bot } from 'grammy'
 
 const routeIds = new Set<RouteId>(routeOptions.map((route) => route.id))
+const dayTypes = new Set<DayType>(['workdays', 'saturday_holiday', 'sunday'])
 
 function envelope<T>(data: T) {
   return {
@@ -111,6 +112,7 @@ export function createApp(config: AppConfig, bot: Bot | null = createTelegramBot
     const to = typeof req.query.to === 'string' ? req.query.to : ''
     const dateValue = typeof req.query.date === 'string' ? req.query.date : toISODate(new Date())
     const routeValue = typeof req.query.routeId === 'string' ? req.query.routeId : undefined
+    const dayTypeValue = typeof req.query.dayType === 'string' ? req.query.dayType : undefined
 
     if (!from || !to) {
       res.status(400).json(apiError('from and to are required'))
@@ -127,19 +129,26 @@ export function createApp(config: AppConfig, bot: Bot | null = createTelegramBot
       return
     }
 
+    if (dayTypeValue && !dayTypes.has(dayTypeValue as DayType)) {
+      res.status(400).json(apiError('Unknown dayType'))
+      return
+    }
+
     try {
       const date = parseISODate(dateValue)
+      const dayType = dayTypeValue ? (dayTypeValue as DayType) : getDayType(date)
       const departures = searchDepartures({
         routeId: routeValue as RouteId | undefined,
         from,
         to,
         date,
+        dayType,
       })
 
       res.json(
         envelope({
           date: dateValue,
-          dayType: getDayType(date),
+          dayType,
           source: sourceMetadata,
           departures,
         }),

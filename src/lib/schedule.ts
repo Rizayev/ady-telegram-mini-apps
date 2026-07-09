@@ -8,6 +8,7 @@ import type {
   RouteId,
   ScheduleSearchParams,
   StopTime,
+  DayType,
 } from './types.js'
 
 export function timeToMinutes(value: string): number {
@@ -65,8 +66,12 @@ export function stationsForRoute(routeId: RouteId): readonly string[] {
   return uniqueStations(routeId)
 }
 
-export function originStationsForRoute(routeId: RouteId, date: Date): readonly string[] {
-  const dayType = getDayType(date)
+function resolveDayType(date: Date, dayType?: DayType): DayType {
+  return dayType ?? getDayType(date)
+}
+
+export function originStationsForRoute(routeId: RouteId, date: Date, dayTypeOverride?: DayType): readonly string[] {
+  const dayType = resolveDayType(date, dayTypeOverride)
   const route = scheduleData.routesData[routeId]
   const origins = new Set<string>()
 
@@ -87,8 +92,8 @@ export function originStationsForRoute(routeId: RouteId, date: Date): readonly s
   return [...origins].sort((a, b) => a.localeCompare(b, 'az'))
 }
 
-export function destinationStationsForRoute(routeId: RouteId, from: string, date: Date): readonly string[] {
-  const dayType = getDayType(date)
+export function destinationStationsForRoute(routeId: RouteId, from: string, date: Date, dayTypeOverride?: DayType): readonly string[] {
+  const dayType = resolveDayType(date, dayTypeOverride)
   const route = scheduleData.routesData[routeId]
   const destinations = new Set<string>()
 
@@ -110,15 +115,15 @@ export function destinationStationsForRoute(routeId: RouteId, from: string, date
   return [...destinations].sort((a, b) => a.localeCompare(b, 'az'))
 }
 
-export function defaultSearchForRoute(routeId: RouteId, date: Date): { from: string; to: string } {
+export function defaultSearchForRoute(routeId: RouteId, date: Date, dayTypeOverride?: DayType): { from: string; to: string } {
   const option = routeOptions.find((route) => route.id === routeId)
   if (!option) {
     return { from: '', to: '' }
   }
 
-  const origins = originStationsForRoute(routeId, date)
+  const origins = originStationsForRoute(routeId, date, dayTypeOverride)
   const preferredFrom = origins.includes(option.defaultFrom) ? option.defaultFrom : origins[0]
-  const destinations = preferredFrom ? destinationStationsForRoute(routeId, preferredFrom, date) : []
+  const destinations = preferredFrom ? destinationStationsForRoute(routeId, preferredFrom, date, dayTypeOverride) : []
   const preferredTo = destinations.includes(option.defaultTo) ? option.defaultTo : destinations[0]
 
   return {
@@ -160,7 +165,7 @@ function sameCalendarDay(a: Date, b: Date): boolean {
 export function searchDepartures(params: ScheduleSearchParams): readonly Departure[] {
   const now = params.now ?? new Date()
   const includePassed = params.includePassed ?? true
-  const dayType = getDayType(params.date)
+  const dayType = resolveDayType(params.date, params.dayType)
   const routeIds = params.routeId ? [params.routeId] : routeOptions.map((route) => route.id)
   const currentMinute = getBakuClockMinutes(now)
   const isToday = sameCalendarDay(params.date, now)

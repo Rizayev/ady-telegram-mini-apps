@@ -35,6 +35,31 @@ describe('schedule search', () => {
     })
   })
 
+  it('uses explicit day type overrides independently from calendar date', () => {
+    const date = parseISODate('2026-07-09')
+    const workdayResults = searchDepartures({
+      routeId: 'baki_pirshagi_sumqayit',
+      from: 'Bakı',
+      to: 'Sumqayıt',
+      date,
+      dayType: 'workdays',
+    })
+    const holidayResults = searchDepartures({
+      routeId: 'baki_pirshagi_sumqayit',
+      from: 'Bakı',
+      to: 'Sumqayıt',
+      date,
+      dayType: 'saturday_holiday',
+    })
+
+    expect(workdayResults).toHaveLength(26)
+    expect(holidayResults).toHaveLength(15)
+    expect(holidayResults[0]).toMatchObject({
+      trainNumber: '6601',
+      departAt: '07:05',
+    })
+  })
+
   it('excludes trains that do not reach the requested destination', () => {
     const results = searchDepartures({
       routeId: 'baki_xirdalan_sumqayit',
@@ -62,6 +87,29 @@ describe('schedule search', () => {
       passed: false,
       next: true,
     })
+  })
+
+  it('can search an explicitly selected weekend schedule for any date', () => {
+    const workdayResults = searchDepartures({
+      routeId: 'baki_pirshagi_sumqayit',
+      from: 'Bakı',
+      to: 'Sumqayıt',
+      date: parseISODate('2026-07-09'),
+      dayType: 'workdays',
+      now: new Date('2026-07-09T05:00:00+04:00'),
+    })
+    const sundayResults = searchDepartures({
+      routeId: 'baki_pirshagi_sumqayit',
+      from: 'Bakı',
+      to: 'Sumqayıt',
+      date: parseISODate('2026-07-09'),
+      dayType: 'sunday',
+      now: new Date('2026-07-09T05:00:00+04:00'),
+    })
+
+    expect(workdayResults.length).toBeGreaterThan(0)
+    expect(sundayResults.length).toBeGreaterThan(0)
+    expect(sundayResults.length).not.toBe(workdayResults.length)
   })
 
   it('finds reverse-direction departures', () => {
@@ -149,7 +197,7 @@ describe('schedule search', () => {
   it('returns valid origin and destination options for route defaults', () => {
     const date = parseISODate('2026-07-09')
 
-    expect(defaultSearchForRoute('baki_xirdalan_sumqayit', date)).toEqual({
+    expect(defaultSearchForRoute('baki_xirdalan_sumqayit', date, 'saturday_holiday')).toEqual({
       from: 'Bakı',
       to: 'Xırdalan',
     })

@@ -39,6 +39,20 @@ describe('api app', () => {
     })
   })
 
+  it('allows explicit schedule day type overrides', async () => {
+    const response = await request(testApp())
+      .get('/api/schedule')
+      .query({ routeId: 'baki_pirshagi_sumqayit', from: 'Bakı', to: 'Sumqayıt', date: '2026-07-09', dayType: 'saturday_holiday' })
+
+    expect(response.status).toBe(200)
+    expect(response.body.data.dayType).toBe('saturday_holiday')
+    expect(response.body.data.departures).toHaveLength(15)
+    expect(response.body.data.departures[0]).toMatchObject({
+      trainNumber: '6601',
+      departAt: '07:05',
+    })
+  })
+
   it('returns metadata and station lists', async () => {
     const meta = await request(testApp()).get('/api/meta')
     const stations = await request(testApp()).get('/api/stations').query({ routeId: 'baki_xirdalan_sumqayit' })
@@ -55,12 +69,16 @@ describe('api app', () => {
     const badRoute = await request(testApp())
       .get('/api/schedule')
       .query({ routeId: 'bad', from: 'Bakı', to: 'Sumqayıt', date: '2026-07-09' })
+    const badDayType = await request(testApp())
+      .get('/api/schedule')
+      .query({ routeId: 'baki_pirshagi_sumqayit', from: 'Bakı', to: 'Sumqayıt', date: '2026-07-09', dayType: 'bad' })
 
     expect(response.status).toBe(400)
     expect(response.body.success).toBe(false)
     expect(badDate.status).toBe(400)
     expect(impossibleDate.status).toBe(400)
     expect(badRoute.status).toBe(400)
+    expect(badDayType.status).toBe(400)
   })
 
   it('protects refresh endpoint', async () => {

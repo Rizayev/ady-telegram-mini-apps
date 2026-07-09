@@ -1,8 +1,8 @@
 .app-shell {
   min-height: 100svh;
   background:
-    linear-gradient(180deg, rgba(244, 248, 251, 0) 0, #f4f8fb 278px),
-    #f4f8fb;
+    linear-gradient(180deg, rgba(239, 246, 251, 0) 0, #eef5f9 320px),
+    linear-gradient(135deg, #eef5f9 0%, #f8fbfd 48%, #eef8f5 100%);
   color: #0f172a;
   padding-bottom: calc(28px + env(safe-area-inset-bottom));
 }
@@ -16,7 +16,7 @@
 
 .hero-section {
   position: relative;
-  min-height: 308px;
+  min-height: 286px;
   overflow: hidden;
   background: #08233f;
   color: #ffffff;
@@ -34,8 +34,8 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(4, 20, 38, 0.22) 0%, rgba(4, 20, 38, 0.84) 100%),
-    linear-gradient(90deg, rgba(4, 20, 38, 0.9) 0%, rgba(4, 20, 38, 0.24) 72%);
+    linear-gradient(180deg, rgba(3, 18, 32, 0.14) 0%, rgba(3, 18, 32, 0.82) 100%),
+    linear-gradient(90deg, rgba(3, 18, 32, 0.92) 0%, rgba(3, 18, 32, 0.2) 74%);
 }
 
 .topbar,
@@ -94,7 +94,10 @@
 .language-tabs button,
 .text-action,
 .icon-action,
-.route-tabs button {
+.route-tabs button,
+.favorite-chip,
+.favorite-remove,
+.day-type-tabs button {
   border: 0;
   font: inherit;
   cursor: pointer;
@@ -119,7 +122,7 @@
   display: flex;
   align-items: end;
   gap: 14px;
-  min-height: 218px;
+  min-height: 196px;
   padding-bottom: 24px;
 }
 
@@ -150,11 +153,11 @@
 }
 
 .search-surface {
-  margin-top: -24px;
-  border: 1px solid rgba(13, 74, 113, 0.12);
+  margin-top: -26px;
+  border: 1px solid rgba(13, 74, 113, 0.1);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 18px 42px rgba(8, 35, 63, 0.16);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 22px 60px rgba(8, 35, 63, 0.14);
   backdrop-filter: blur(18px);
 }
 
@@ -166,19 +169,37 @@
 }
 
 .route-tabs button {
-  min-height: 70px;
+  position: relative;
+  min-height: 74px;
+  overflow: hidden;
   border: 1px solid #d8e5ee;
   border-radius: 8px;
-  background: #f8fbfd;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbfd 100%);
   color: #17324d;
   padding: 10px;
   text-align: left;
 }
 
+.route-tabs button.is-selected::after {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--route-accent);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--route-accent) 18%, transparent);
+  content: '';
+}
+
 .route-tabs button.is-selected {
   border-color: var(--route-accent);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--route-accent) 12%, #ffffff), #ffffff);
-  box-shadow: inset 0 3px 0 var(--route-accent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--route-accent) 13%, #ffffff), #ffffff),
+    #ffffff;
+  box-shadow:
+    inset 0 3px 0 var(--route-accent),
+    0 10px 24px color-mix(in srgb, var(--route-accent) 16%, transparent);
 }
 
 .route-tabs span,
@@ -216,14 +237,26 @@
 
 .favorite-chips {
   display: flex;
-  gap: 7px;
+  gap: 8px;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding-bottom: 3px;
   scrollbar-width: none;
 }
 
 .favorite-chips::-webkit-scrollbar {
   display: none;
+}
+
+.favorite-item {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  overflow: hidden;
+  min-height: 34px;
+  max-width: 190px;
+  border: 1px solid #d5e2ec;
+  border-radius: 999px;
+  background: #ffffff;
 }
 
 .favorite-chip {
@@ -233,9 +266,8 @@
   gap: 6px;
   min-height: 34px;
   max-width: 190px;
-  border: 1px solid #d5e2ec;
   border-radius: 999px;
-  background: #ffffff;
+  background: transparent;
   color: #24445e;
   padding: 0 10px;
   font-size: 12px;
@@ -248,9 +280,13 @@
   white-space: nowrap;
 }
 
-.favorite-chip.is-active {
+.favorite-item.is-active {
   border-color: #00a7d8;
   background: #dff5fb;
+  box-shadow: 0 8px 18px rgba(0, 121, 157, 0.12);
+}
+
+.favorite-item.is-active .favorite-chip {
   color: #006b8b;
 }
 
@@ -259,7 +295,23 @@
   opacity: 0.52;
 }
 
+.favorite-remove {
+  display: inline-grid;
+  width: 28px;
+  height: 34px;
+  place-items: center;
+  border-left: 1px solid rgba(8, 35, 63, 0.08);
+  background: transparent;
+  color: #62798c;
+}
+
+.favorite-remove:hover {
+  color: #d42e29;
+}
+
 .save-chip {
+  border: 1px dashed #a9d8e6;
+  background: #f5fcff;
   color: #00799d;
 }
 
@@ -306,6 +358,8 @@
 .icon-action:focus-visible,
 .text-action:focus-visible,
 .favorite-chip:focus-visible,
+.favorite-remove:focus-visible,
+.day-type-tabs button:focus-visible,
 .route-tabs button:focus-visible,
 .language-tabs button:focus-visible {
   outline: 3px solid rgba(0, 167, 216, 0.3);
@@ -326,8 +380,72 @@
   height: 48px;
   place-items: center;
   border-radius: 8px;
+  background: linear-gradient(180deg, #0c385c, #061f38);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(8, 35, 63, 0.18);
+}
+
+.day-type-row {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid #e3edf4;
+  padding: 10px;
+}
+
+.day-type-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #53687a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.day-type-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid #d8e5ee;
+  border-radius: 8px;
+  background: #eef5f9;
+}
+
+.day-type-tabs button {
+  display: grid;
+  min-width: 0;
+  min-height: 44px;
+  place-items: center;
+  border-radius: 7px;
+  background: transparent;
+  color: #50687d;
+  padding: 5px 6px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.day-type-tabs button span,
+.day-type-tabs button small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.day-type-tabs button small {
+  color: #7b91a3;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.day-type-tabs button.is-selected {
   background: #08233f;
   color: #ffffff;
+  box-shadow: 0 8px 18px rgba(8, 35, 63, 0.18);
+}
+
+.day-type-tabs button.is-selected small {
+  color: rgba(255, 255, 255, 0.74);
 }
 
 .summary-strip {
@@ -335,6 +453,7 @@
   gap: 12px;
   border-top: 1px solid #e3edf4;
   padding: 10px;
+  background: #f8fbfd;
   color: #41586d;
   font-size: 13px;
   font-weight: 800;
@@ -344,6 +463,13 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+
+.summary-strip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .text-action {
@@ -384,16 +510,17 @@
 }
 
 .departure-card {
+  position: relative;
   overflow: hidden;
-  border: 1px solid #dce8f0;
+  border: 1px solid #d7e6ef;
   border-radius: 8px;
   background: #ffffff;
-  box-shadow: 0 10px 28px rgba(8, 35, 63, 0.08);
+  box-shadow: 0 14px 34px rgba(8, 35, 63, 0.08);
 }
 
 .departure-card.is-featured {
   border-color: #00a7d8;
-  box-shadow: 0 16px 38px rgba(0, 121, 157, 0.18);
+  box-shadow: 0 18px 48px rgba(0, 121, 157, 0.18);
 }
 
 .departure-card.is-passed {
@@ -410,7 +537,9 @@
 }
 
 .ticket-top {
-  background: #08233f;
+  background:
+    linear-gradient(90deg, #06213b, #0b4267 68%, #087291),
+    #08233f;
   color: #ffffff;
 }
 
@@ -431,10 +560,10 @@
 
 .route-times {
   display: grid;
-  grid-template-columns: minmax(74px, 1fr) minmax(70px, 1.2fr) minmax(74px, 1fr);
+  grid-template-columns: minmax(76px, 1fr) minmax(74px, 1.15fr) minmax(76px, 1fr);
   align-items: center;
   gap: 12px;
-  padding: 16px 12px 14px;
+  padding: 18px 12px 14px;
 }
 
 .route-times div:not(.rail-line) {
@@ -447,8 +576,8 @@
 
 .route-times strong {
   display: block;
-  color: #08233f;
-  font-size: 30px;
+  color: #061f38;
+  font-size: 32px;
   font-weight: 900;
   line-height: 1;
 }
@@ -505,7 +634,7 @@
   gap: 6px;
   min-height: 31px;
   border-radius: 8px;
-  background: #f1f7fb;
+  background: #eef6fa;
   color: #24445e;
   padding: 0 9px;
   font-size: 12px;
@@ -595,6 +724,15 @@
     grid-template-columns: 1fr 44px 1fr 184px;
   }
 
+  .day-type-row {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+
+  .day-type-tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   .date-field {
     grid-column: auto;
   }
@@ -616,5 +754,9 @@
 
   .route-times strong {
     font-size: 26px;
+  }
+
+  .day-type-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

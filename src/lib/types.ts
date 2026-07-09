@@ -70,6 +70,7 @@ export interface ScheduleSearchParams {
   readonly from: string
   readonly to: string
   readonly date: Date
+  readonly dayType?: DayType
   readonly now?: Date
   readonly includePassed?: boolean
 }

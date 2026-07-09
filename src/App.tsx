@@ -22,7 +22,7 @@ import { defaultSearchForRoute, destinationStationsForRoute, minutesToShortLabel
 import { defaultRouteId, routeOptions, sourceMetadata } from './lib/scheduleData.js'
 import { createShareText } from './lib/share.js'
 import { initializeTelegramShell } from './lib/telegram.js'
-import type { Departure, RouteId } from './lib/types.js'
+import type { DayType, Departure, RouteId } from './lib/types.js'
 
 interface FavoriteRoute {
   readonly id: string
@@ -32,8 +32,11 @@ interface FavoriteRoute {
   readonly removable: boolean
 }
 
+type ScheduleMode = 'auto' | DayType
+
 const favoritesStorageKey = 'ady-schedule-favorites:v1'
 const routeIds = new Set<RouteId>(routeOptions.map((route) => route.id))
+const scheduleModes = ['auto', 'workdays', 'saturday_holiday', 'sunday'] satisfies readonly ScheduleMode[]
 
 const defaultFavorites: readonly FavoriteRoute[] = [
   { id: 'default-baki-sumqayit', routeId: 'baki_pirshagi_sumqayit', from: 'Bakı', to: 'Sumqayıt', removable: false },
@@ -42,13 +45,28 @@ const defaultFavorites: readonly FavoriteRoute[] = [
   { id: 'default-xirdalan-baki', routeId: 'baki_xirdalan_sumqayit', from: 'Xırdalan', to: 'Bakı', removable: false },
 ]
 
+function isStoredFavorite(value: unknown): value is FavoriteRoute {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const favorite = value as Partial<FavoriteRoute>
+  return (
+    typeof favorite.id === 'string' &&
+    routeIds.has(favorite.routeId as RouteId) &&
+    typeof favorite.from === 'string' &&
+    typeof favorite.to === 'string' &&
+    favorite.from.length > 0 &&
+    favorite.to.length > 0 &&
+    favorite.from !== favorite.to
+  )
+}
+
 function loadFavoriteRoutes(): readonly FavoriteRoute[] {
   try {
     const stored = window.localStorage.getItem(favoritesStorageKey)
-    const parsed = stored ? (JSON.parse(stored) as FavoriteRoute[]) : []
-    const customFavorites = parsed.filter(
-      (favorite) => routeIds.has(favorite.routeId) && favorite.from && favorite.to,
-    )
+    const parsed = stored ? (JSON.parse(stored) as unknown) : []
+    const customFavorites = Array.isArray(parsed) ? parsed.filter(isStoredFavorite) : []
 
     return [
       ...defaultFavorites,
@@ -68,12 +86,25 @@ function persistFavoriteRoutes(favorites: readonly FavoriteRoute[]) {
   }
 }
 
+function scheduleModeLabel(mode: ScheduleMode, language: Language): string {
+  const t = copy[language]
+  const labels = {
+    auto: t.autoDayType,
+    workdays: t.workdayShort,
+    saturday_holiday: t.saturdayShort,
+    sunday: t.sundayShort,
+  } satisfies Record<ScheduleMode, string>
+
+  return labels[mode]
+}
+
 function App() {
   const [language, setLanguage] = useState<Language>(() => detectLanguage())
   const [routeId, setRouteId] = useState<RouteId>(defaultRouteId)
   const [from, setFrom] = useState('Bakı')
   const [to, setTo] = useState('Sumqayıt')
   const [date, setDate] = useState(() => toISODate(new Date()))
+  const [scheduleMode, setScheduleMode] = useState<ScheduleMode>('auto')
   const [favorites, setFavorites] = useState<readonly FavoriteRoute[]>(() => loadFavoriteRoutes())
   const [telegramShell, setTelegramShell] = useState(() => ({
     isTelegram: false,
@@ -83,17 +114,22 @@ function App() {
 
   const t = copy[language]
   const selectedDate = useMemo(() => parseISODate(date || toISODate(new Date())), [date])
-  const originOptions = useMemo(() => originStationsForRoute(routeId, selectedDate), [routeId, selectedDate])
-  const destinationOptions = useMemo(() => destinationStationsForRoute(routeId, from, selectedDate), [from, routeId, selectedDate])
+  const automaticDayType = useMemo(() => getDayType(selectedDate), [selectedDate])
+  const activeDayType = scheduleMode === 'auto' ? automaticDayType : scheduleMode
+  const originOptions = useMemo(() => originStationsForRoute(routeId, selectedDate, activeDayType), [activeDayType, routeId, selectedDate])
+  const destinationOptions = useMemo(
+    () => destinationStationsForRoute(routeId, from, selectedDate, activeDayType),
+    [activeDayType, from, routeId, selectedDate],
+  )
 
   useEffect(() => {
     setTelegramShell(initializeTelegramShell())
   }, [])
 
   useEffect(() => {
-    const defaults = defaultSearchForRoute(routeId, selectedDate)
+    const defaults = defaultSearchForRoute(routeId, selectedDate, activeDayType)
     const nextFrom = originOptions.includes(from) ? from : defaults.from
-    const destinations = nextFrom ? destinationStationsForRoute(routeId, nextFrom, selectedDate) : []
+    const destinations = nextFrom ? destinationStationsForRoute(routeId, nextFrom, selectedDate, activeDayType) : []
     const nextTo = destinations.includes(to) && to !== nextFrom ? to : destinations[0] ?? defaults.to
 
     if (nextFrom !== from) {
@@ -103,7 +139,7 @@ function App() {
     if (nextTo !== to) {
       setTo(nextTo)
     }
-  }, [from, originOptions, routeId, selectedDate, to])
+  }, [activeDayType, from, originOptions, routeId, selectedDate, to])
 
   const departures = useMemo(
     () =>
@@ -112,13 +148,14 @@ function App() {
         from,
         to,
         date: selectedDate,
+        dayType: activeDayType,
         includePassed: true,
       }),
-    [from, routeId, selectedDate, to],
+    [activeDayType, from, routeId, selectedDate, to],
   )
 
   const nextDeparture = departures.find((departure) => departure.next) ?? null
-  const dayType = dayTypeLabel(getDayType(selectedDate), language)
+  const dayType = dayTypeLabel(activeDayType, language)
   const currentFavoriteExists = favorites.some((favorite) => favorite.routeId === routeId && favorite.from === from && favorite.to === to)
 
   function swapStations() {
@@ -127,7 +164,7 @@ function App() {
   }
 
   function selectRoute(nextRouteId: RouteId) {
-    const defaults = defaultSearchForRoute(nextRouteId, selectedDate)
+    const defaults = defaultSearchForRoute(nextRouteId, selectedDate, activeDayType)
     setRouteId(nextRouteId)
     setFrom(defaults.from)
     setTo(defaults.to)
@@ -229,24 +266,24 @@ function App() {
           </div>
           <div className="favorite-chips">
             {favorites.map((favorite) => (
-              <button
+              <div
                 key={favorite.id}
-                className={favorite.routeId === routeId && favorite.from === from && favorite.to === to ? 'favorite-chip is-active' : 'favorite-chip'}
-                type="button"
-                onClick={() => applyFavorite(favorite)}
+                className={favorite.routeId === routeId && favorite.from === from && favorite.to === to ? 'favorite-item is-active' : 'favorite-item'}
               >
-                <span>{favorite.from} → {favorite.to}</span>
+                <button className="favorite-chip" type="button" onClick={() => applyFavorite(favorite)}>
+                  <span>{favorite.from} → {favorite.to}</span>
+                </button>
                 {favorite.removable ? (
-                  <X
+                  <button
+                    className="favorite-remove"
                     aria-label={t.removeFavorite}
-                    size={14}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      removeFavorite(favorite.id)
-                    }}
-                  />
+                    type="button"
+                    onClick={() => removeFavorite(favorite.id)}
+                  >
+                    <X size={14} />
+                  </button>
                 ) : null}
-              </button>
+              </div>
             ))}
             <button className="favorite-chip save-chip" type="button" disabled={currentFavoriteExists || !from || !to} onClick={saveCurrentFavorite}>
               <Star size={14} />
@@ -297,10 +334,31 @@ function App() {
           </label>
         </div>
 
+        <div className="day-type-row" aria-label={t.dayType}>
+          <div className="day-type-title">
+            <CalendarDays size={15} />
+            <span>{t.dayType}</span>
+          </div>
+          <div className="day-type-tabs">
+            {scheduleModes.map((mode) => (
+              <button
+                key={mode}
+                className={scheduleMode === mode ? 'is-selected' : ''}
+                type="button"
+                aria-pressed={scheduleMode === mode}
+                onClick={() => setScheduleMode(mode)}
+              >
+                <span>{scheduleModeLabel(mode, language)}</span>
+                {mode === 'auto' ? <small>{dayTypeLabel(automaticDayType, language)}</small> : null}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="summary-strip">
           <div>
             <Search size={18} />
-            <span>{dayType}</span>
+            <span>{t.activeSchedule}: {dayType}</span>
           </div>
           <button className="text-action" type="button" onClick={() => setDate(toISODate(new Date()))}>
             {t.today}
