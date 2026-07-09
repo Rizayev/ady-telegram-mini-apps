@@ -238,7 +238,7 @@ function App() {
           </div>
           <div>
             <h1 id="page-title">{t.appName}</h1>
-            <p>{telegramShell.userFirstName ? `${telegramShell.userFirstName}, ${t.tagline}` : t.tagline}</p>
+            <p>{t.tagline}</p>
           </div>
         </div>
       </section>

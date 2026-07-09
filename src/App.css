@@ -738,6 +738,231 @@
   }
 }
 
+@media (max-width: 520px) {
+  .app-shell {
+    background:
+      linear-gradient(180deg, rgba(238, 245, 249, 0) 0, #eef5f9 210px),
+      #eef5f9;
+  }
+
+  .hero-section {
+    min-height: 222px;
+  }
+
+  .hero-overlay {
+    background:
+      linear-gradient(180deg, rgba(4, 20, 38, 0.18) 0%, rgba(4, 20, 38, 0.9) 100%),
+      linear-gradient(90deg, rgba(4, 20, 38, 0.92) 0%, rgba(4, 20, 38, 0.2) 78%);
+  }
+
+  .topbar,
+  .hero-content,
+  .search-surface,
+  .next-band,
+  .departures-section,
+  .source-footer {
+    width: min(100% - 22px, 720px);
+  }
+
+  .topbar {
+    padding-top: calc(10px + env(safe-area-inset-top));
+  }
+
+  .mode-pill {
+    height: 30px;
+    gap: 6px;
+    padding-inline: 10px;
+    font-size: 12px;
+  }
+
+  .language-tabs {
+    gap: 2px;
+    padding: 2px;
+  }
+
+  .language-tabs button {
+    min-width: 34px;
+    height: 26px;
+    font-size: 11px;
+  }
+
+  .hero-content {
+    min-height: 154px;
+    gap: 10px;
+    padding-bottom: 28px;
+  }
+
+  .brand-mark {
+    width: 42px;
+    height: 42px;
+  }
+
+  .hero-content h1 {
+    font-size: 29px;
+    line-height: 0.98;
+  }
+
+  .hero-content p {
+    margin-top: 5px;
+    font-size: 13px;
+  }
+
+  .search-surface {
+    margin-top: -18px;
+    box-shadow: 0 14px 34px rgba(8, 35, 63, 0.12);
+  }
+
+  .route-tabs {
+    gap: 7px;
+    padding: 8px;
+  }
+
+  .route-tabs button {
+    min-height: 58px;
+    padding: 8px;
+  }
+
+  .route-tabs span {
+    font-size: 14px;
+  }
+
+  .route-tabs small {
+    margin-top: 3px;
+    font-size: 10px;
+  }
+
+  .favorites-row {
+    gap: 7px;
+    padding: 8px;
+  }
+
+  .favorite-chips {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .favorite-item,
+  .favorite-chip,
+  .save-chip {
+    width: 100%;
+    max-width: none;
+  }
+
+  .favorite-chip {
+    justify-content: center;
+    min-height: 32px;
+    padding-inline: 8px;
+    font-size: 11px;
+  }
+
+  .favorite-remove {
+    width: 30px;
+    height: 32px;
+  }
+
+  .save-chip:disabled {
+    display: none;
+  }
+
+  .field-grid {
+    grid-template-columns: 1fr 40px 1fr;
+    gap: 8px;
+    padding: 0 8px 8px;
+  }
+
+  .field {
+    gap: 5px;
+  }
+
+  .field span,
+  .favorites-title,
+  .day-type-title {
+    font-size: 11px;
+  }
+
+  .field select,
+  .field input {
+    min-height: 42px;
+    font-size: 14px;
+    padding-inline: 10px;
+  }
+
+  .icon-action {
+    min-width: 40px;
+    height: 42px;
+  }
+
+  .day-type-row {
+    gap: 7px;
+    padding: 8px;
+  }
+
+  .day-type-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+    padding: 4px;
+  }
+
+  .day-type-tabs button {
+    min-height: 36px;
+    padding: 4px 6px;
+    font-size: 10px;
+  }
+
+  .day-type-tabs button small {
+    font-size: 9px;
+  }
+
+  .summary-strip {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .text-action {
+    min-height: 32px;
+    padding-inline: 10px;
+  }
+
+  .next-band,
+  .departures-section {
+    margin-top: 16px;
+  }
+
+  .section-title {
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+
+  .ticket-top,
+  .ticket-bottom {
+    padding: 10px;
+  }
+
+  .route-times {
+    grid-template-columns: minmax(68px, 1fr) minmax(64px, 0.9fr) minmax(68px, 1fr);
+    gap: 8px;
+    padding: 14px 10px 12px;
+  }
+
+  .route-times strong {
+    font-size: 27px;
+  }
+
+  .route-times span,
+  .trip-metrics span,
+  .stops-preview {
+    font-size: 11px;
+  }
+
+  .trip-metrics {
+    gap: 6px;
+    padding: 0 10px 10px;
+  }
+}
+
 @media (max-width: 390px) {
   .topbar,
   .hero-content,
@@ -749,7 +974,7 @@
   }
 
   .hero-content h1 {
-    font-size: 31px;
+    font-size: 28px;
   }
 
   .route-times strong {
