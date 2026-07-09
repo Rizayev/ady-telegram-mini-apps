@@ -37,6 +37,8 @@ export interface RouteOption {
   readonly accent: string
   readonly shortName: string
   readonly description: string
+  readonly defaultFrom: string
+  readonly defaultTo: string
 }
 
 export interface StopTime {

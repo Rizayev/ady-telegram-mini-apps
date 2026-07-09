@@ -2,6 +2,12 @@
 
 Telegram Mini App and web app for the Baku-Sumgayit commuter train schedule.
 
+Features:
+
+- Fast route search for the Pirshagi and Xirdalan commuter lines.
+- Ready-made and custom favorite directions stored locally in the browser.
+- Telegram bot commands, chat menu button, and authenticated webhook support.
+
 ## Local
 
 ```bash

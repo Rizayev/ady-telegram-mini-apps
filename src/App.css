@@ -198,6 +198,71 @@
   line-height: 1.25;
 }
 
+.favorites-row {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid #e3edf4;
+  padding: 10px;
+}
+
+.favorites-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #53687a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.favorite-chips {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.favorite-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.favorite-chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  max-width: 190px;
+  border: 1px solid #d5e2ec;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #24445e;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.favorite-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.favorite-chip.is-active {
+  border-color: #00a7d8;
+  background: #dff5fb;
+  color: #006b8b;
+}
+
+.favorite-chip:disabled {
+  cursor: default;
+  opacity: 0.52;
+}
+
+.save-chip {
+  color: #00799d;
+}
+
 .field-grid {
   display: grid;
   grid-template-columns: 1fr 42px 1fr;
@@ -240,6 +305,7 @@
 .field input:focus,
 .icon-action:focus-visible,
 .text-action:focus-visible,
+.favorite-chip:focus-visible,
 .route-tabs button:focus-visible,
 .language-tabs button:focus-visible {
   outline: 3px solid rgba(0, 167, 216, 0.3);

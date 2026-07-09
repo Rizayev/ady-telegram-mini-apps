@@ -8,7 +8,9 @@ import {
   Navigation2,
   Search,
   Share2,
+  Star,
   TrainFront,
+  X,
   WalletCards,
 } from 'lucide-react'
 import type { CSSProperties } from 'react'
@@ -16,19 +18,63 @@ import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { dayTypeLabel, getDayType, parseISODate, toISODate } from './lib/calendar.js'
 import { copy, detectLanguage, languages, type Language } from './lib/i18n.js'
-import { minutesToShortLabel, searchDepartures, stationsForRoute } from './lib/schedule.js'
+import { defaultSearchForRoute, destinationStationsForRoute, minutesToShortLabel, originStationsForRoute, searchDepartures } from './lib/schedule.js'
 import { defaultRouteId, routeOptions, sourceMetadata } from './lib/scheduleData.js'
 import { createShareText } from './lib/share.js'
 import { initializeTelegramShell } from './lib/telegram.js'
 import type { Departure, RouteId } from './lib/types.js'
 
+interface FavoriteRoute {
+  readonly id: string
+  readonly routeId: RouteId
+  readonly from: string
+  readonly to: string
+  readonly removable: boolean
+}
+
+const favoritesStorageKey = 'ady-schedule-favorites:v1'
+const routeIds = new Set<RouteId>(routeOptions.map((route) => route.id))
+
+const defaultFavorites: readonly FavoriteRoute[] = [
+  { id: 'default-baki-sumqayit', routeId: 'baki_pirshagi_sumqayit', from: 'Bakı', to: 'Sumqayıt', removable: false },
+  { id: 'default-sumqayit-baki', routeId: 'baki_pirshagi_sumqayit', from: 'Sumqayıt', to: 'Bakı', removable: false },
+  { id: 'default-baki-xirdalan', routeId: 'baki_xirdalan_sumqayit', from: 'Bakı', to: 'Xırdalan', removable: false },
+  { id: 'default-xirdalan-baki', routeId: 'baki_xirdalan_sumqayit', from: 'Xırdalan', to: 'Bakı', removable: false },
+]
+
+function loadFavoriteRoutes(): readonly FavoriteRoute[] {
+  try {
+    const stored = window.localStorage.getItem(favoritesStorageKey)
+    const parsed = stored ? (JSON.parse(stored) as FavoriteRoute[]) : []
+    const customFavorites = parsed.filter(
+      (favorite) => routeIds.has(favorite.routeId) && favorite.from && favorite.to,
+    )
+
+    return [
+      ...defaultFavorites,
+      ...customFavorites.map((favorite) => ({ ...favorite, removable: true })),
+    ]
+  } catch {
+    return defaultFavorites
+  }
+}
+
+function persistFavoriteRoutes(favorites: readonly FavoriteRoute[]) {
+  try {
+    const customFavorites = favorites.filter((favorite) => favorite.removable)
+    window.localStorage.setItem(favoritesStorageKey, JSON.stringify(customFavorites))
+  } catch {
+    // The app still works if private browsing blocks localStorage.
+  }
+}
+
 function App() {
   const [language, setLanguage] = useState<Language>(() => detectLanguage())
   const [routeId, setRouteId] = useState<RouteId>(defaultRouteId)
-  const stationOptions = useMemo(() => stationsForRoute(routeId), [routeId])
   const [from, setFrom] = useState('Bakı')
   const [to, setTo] = useState('Sumqayıt')
   const [date, setDate] = useState(() => toISODate(new Date()))
+  const [favorites, setFavorites] = useState<readonly FavoriteRoute[]>(() => loadFavoriteRoutes())
   const [telegramShell, setTelegramShell] = useState(() => ({
     isTelegram: false,
     userFirstName: null as string | null,
@@ -37,19 +83,27 @@ function App() {
 
   const t = copy[language]
   const selectedDate = useMemo(() => parseISODate(date || toISODate(new Date())), [date])
+  const originOptions = useMemo(() => originStationsForRoute(routeId, selectedDate), [routeId, selectedDate])
+  const destinationOptions = useMemo(() => destinationStationsForRoute(routeId, from, selectedDate), [from, routeId, selectedDate])
 
   useEffect(() => {
     setTelegramShell(initializeTelegramShell())
   }, [])
 
   useEffect(() => {
-    if (!stationOptions.includes(from) || !stationOptions.includes(to) || from === to) {
-      const nextFrom = stationOptions.includes('Bakı') ? 'Bakı' : stationOptions[0]
-      const nextTo = stationOptions.includes('Sumqayıt') ? 'Sumqayıt' : stationOptions.at(-1)
-      setFrom(nextFrom ?? '')
-      setTo(nextTo ?? '')
+    const defaults = defaultSearchForRoute(routeId, selectedDate)
+    const nextFrom = originOptions.includes(from) ? from : defaults.from
+    const destinations = nextFrom ? destinationStationsForRoute(routeId, nextFrom, selectedDate) : []
+    const nextTo = destinations.includes(to) && to !== nextFrom ? to : destinations[0] ?? defaults.to
+
+    if (nextFrom !== from) {
+      setFrom(nextFrom)
     }
-  }, [from, routeId, stationOptions, to])
+
+    if (nextTo !== to) {
+      setTo(nextTo)
+    }
+  }, [from, originOptions, routeId, selectedDate, to])
 
   const departures = useMemo(
     () =>
@@ -63,12 +117,51 @@ function App() {
     [from, routeId, selectedDate, to],
   )
 
-  const nextDeparture = departures.find((departure) => departure.next) ?? departures[0] ?? null
+  const nextDeparture = departures.find((departure) => departure.next) ?? null
   const dayType = dayTypeLabel(getDayType(selectedDate), language)
+  const currentFavoriteExists = favorites.some((favorite) => favorite.routeId === routeId && favorite.from === from && favorite.to === to)
 
   function swapStations() {
     setFrom(to)
     setTo(from)
+  }
+
+  function selectRoute(nextRouteId: RouteId) {
+    const defaults = defaultSearchForRoute(nextRouteId, selectedDate)
+    setRouteId(nextRouteId)
+    setFrom(defaults.from)
+    setTo(defaults.to)
+  }
+
+  function applyFavorite(favorite: FavoriteRoute) {
+    setRouteId(favorite.routeId)
+    setFrom(favorite.from)
+    setTo(favorite.to)
+  }
+
+  function saveCurrentFavorite() {
+    if (currentFavoriteExists || !from || !to) {
+      return
+    }
+
+    const nextFavorites = [
+      ...favorites,
+      {
+        id: `${routeId}-${from}-${to}`.replace(/\s+/g, '-').toLowerCase(),
+        routeId,
+        from,
+        to,
+        removable: true,
+      },
+    ]
+    setFavorites(nextFavorites)
+    persistFavoriteRoutes(nextFavorites)
+  }
+
+  function removeFavorite(id: string) {
+    const nextFavorites = favorites.filter((favorite) => favorite.id !== id)
+    setFavorites(nextFavorites)
+    persistFavoriteRoutes(nextFavorites)
   }
 
   function selectLanguage(nextLanguage: Language) {
@@ -121,12 +214,45 @@ function App() {
               className={route.id === routeId ? 'is-selected' : ''}
               style={{ '--route-accent': route.accent } as CSSProperties}
               type="button"
-              onClick={() => setRouteId(route.id)}
+              onClick={() => selectRoute(route.id)}
             >
               <span>{route.shortName}</span>
               <small>{route.description}</small>
             </button>
           ))}
+        </div>
+
+        <div className="favorites-row" aria-label={t.favorites}>
+          <div className="favorites-title">
+            <Star size={15} />
+            <span>{t.favorites}</span>
+          </div>
+          <div className="favorite-chips">
+            {favorites.map((favorite) => (
+              <button
+                key={favorite.id}
+                className={favorite.routeId === routeId && favorite.from === from && favorite.to === to ? 'favorite-chip is-active' : 'favorite-chip'}
+                type="button"
+                onClick={() => applyFavorite(favorite)}
+              >
+                <span>{favorite.from} → {favorite.to}</span>
+                {favorite.removable ? (
+                  <X
+                    aria-label={t.removeFavorite}
+                    size={14}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      removeFavorite(favorite.id)
+                    }}
+                  />
+                ) : null}
+              </button>
+            ))}
+            <button className="favorite-chip save-chip" type="button" disabled={currentFavoriteExists || !from || !to} onClick={saveCurrentFavorite}>
+              <Star size={14} />
+              <span>{t.addFavorite}</span>
+            </button>
+          </div>
         </div>
 
         <div className="field-grid">
@@ -136,7 +262,7 @@ function App() {
               {t.from}
             </span>
             <select value={from} onChange={(event) => setFrom(event.target.value)}>
-              {stationOptions.map((station) => (
+              {originOptions.map((station) => (
                 <option key={station} value={station}>
                   {station}
                 </option>
@@ -154,7 +280,7 @@ function App() {
               {t.to}
             </span>
             <select value={to} onChange={(event) => setTo(event.target.value)}>
-              {stationOptions.map((station) => (
+              {destinationOptions.map((station) => (
                 <option key={station} value={station}>
                   {station}
                 </option>

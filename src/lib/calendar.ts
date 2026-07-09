@@ -1,5 +1,8 @@
 import type { DayType } from './types.js'
 
+const bakuTimeZone = 'Asia/Baku'
+const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/
+
 const nonWorkingDays = new Set([
   '2025-12-31',
   '2026-01-01',
@@ -29,25 +32,59 @@ const nonWorkingDays = new Set([
   '2026-12-31',
 ])
 
+function getBakuDateParts(date: Date): { year: string; month: string; day: string; hour: string; minute: string } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: bakuTimeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date)
+  const value = (type: string) => parts.find((part) => part.type === type)?.value ?? '00'
+
+  return {
+    year: value('year'),
+    month: value('month'),
+    day: value('day'),
+    hour: value('hour'),
+    minute: value('minute'),
+  }
+}
+
 export function toISODate(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  const parts = getBakuDateParts(date)
+  return `${parts.year}-${parts.month}-${parts.day}`
 }
 
 export function parseISODate(value: string): Date {
-  const [year, month, day] = value.split('-').map(Number)
-  if (!year || !month || !day) {
+  if (!isoDatePattern.test(value)) {
     throw new Error('Date must be in YYYY-MM-DD format')
   }
 
-  return new Date(year, month - 1, day)
+  const [year, month, day] = value.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
+
+  if (toISODate(date) !== value) {
+    throw new Error('Date must be in YYYY-MM-DD format')
+  }
+
+  return date
+}
+
+export function getBakuClockMinutes(date: Date): number {
+  const parts = getBakuDateParts(date)
+  return Number(parts.hour) * 60 + Number(parts.minute)
+}
+
+function dayOfISODate(value: string): number {
+  return new Date(`${value}T12:00:00.000Z`).getUTCDay()
 }
 
 export function getDayType(date: Date): DayType {
   const dateKey = toISODate(date)
-  const day = date.getDay()
+  const day = dayOfISODate(dateKey)
 
   if (day === 0) {
     return 'sunday'

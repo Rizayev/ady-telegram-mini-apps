@@ -6,10 +6,16 @@ const config = loadConfig()
 const bot = createTelegramBot(config)
 const app = createApp(config, bot)
 
-app.listen(config.PORT, () => {
-  console.log(`ady-mini-app listening on ${config.PORT}`)
-})
+function stopAfterStartupFailure(error: unknown) {
+  console.error('Failed to start ADY mini app', error)
+  process.exit(1)
+}
 
-configureTelegramBot(bot, config).catch((error: unknown) => {
-  console.error('Failed to configure Telegram bot', error)
+const server = app.listen(config.PORT, () => {
+  console.log(`ady-mini-app listening on ${config.PORT}`)
+
+  configureTelegramBot(bot, config).catch((error: unknown) => {
+    server.close(() => stopAfterStartupFailure(error))
+    setTimeout(() => stopAfterStartupFailure(error), 1_000).unref()
+  })
 })

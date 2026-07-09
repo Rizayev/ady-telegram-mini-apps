@@ -1,4 +1,4 @@
-import { getDayType } from './calendar.js'
+import { getBakuClockMinutes, getDayType, toISODate } from './calendar.js'
 import { routeOptions, scheduleData } from './scheduleData.js'
 import type {
   DaySchedule,
@@ -65,6 +65,68 @@ export function stationsForRoute(routeId: RouteId): readonly string[] {
   return uniqueStations(routeId)
 }
 
+export function originStationsForRoute(routeId: RouteId, date: Date): readonly string[] {
+  const dayType = getDayType(date)
+  const route = scheduleData.routesData[routeId]
+  const origins = new Set<string>()
+
+  for (const schedule of Object.values(route.directions).map((direction) => direction[dayType])) {
+    schedule.stations.forEach((station, stationIndex) => {
+      const canDepart = schedule.trains.some((train) => {
+        const departAt = train.times[stationIndex]
+        const hasLaterArrival = train.times.slice(stationIndex + 1).some(Boolean)
+        return Boolean(departAt && hasLaterArrival)
+      })
+
+      if (canDepart) {
+        origins.add(station)
+      }
+    })
+  }
+
+  return [...origins].sort((a, b) => a.localeCompare(b, 'az'))
+}
+
+export function destinationStationsForRoute(routeId: RouteId, from: string, date: Date): readonly string[] {
+  const dayType = getDayType(date)
+  const route = scheduleData.routesData[routeId]
+  const destinations = new Set<string>()
+
+  for (const schedule of Object.values(route.directions).map((direction) => direction[dayType])) {
+    const fromIndex = schedule.stations.indexOf(from)
+    if (fromIndex === -1) {
+      continue
+    }
+
+    schedule.stations.slice(fromIndex + 1).forEach((station, offset) => {
+      const stationIndex = fromIndex + 1 + offset
+      const hasTrip = schedule.trains.some((train) => train.times[fromIndex] && train.times[stationIndex])
+      if (hasTrip) {
+        destinations.add(station)
+      }
+    })
+  }
+
+  return [...destinations].sort((a, b) => a.localeCompare(b, 'az'))
+}
+
+export function defaultSearchForRoute(routeId: RouteId, date: Date): { from: string; to: string } {
+  const option = routeOptions.find((route) => route.id === routeId)
+  if (!option) {
+    return { from: '', to: '' }
+  }
+
+  const origins = originStationsForRoute(routeId, date)
+  const preferredFrom = origins.includes(option.defaultFrom) ? option.defaultFrom : origins[0]
+  const destinations = preferredFrom ? destinationStationsForRoute(routeId, preferredFrom, date) : []
+  const preferredTo = destinations.includes(option.defaultTo) ? option.defaultTo : destinations[0]
+
+  return {
+    from: preferredFrom ?? '',
+    to: preferredTo ?? '',
+  }
+}
+
 export function getFare(routeId: RouteId, from: string, to: string): FareInfo | null {
   const route = scheduleData.routesData[routeId]
   const fares = scheduleData.fareData[route.fareInfoKey]
@@ -92,7 +154,7 @@ function routeMatches(schedule: DaySchedule, from: string, to: string): { fromIn
 }
 
 function sameCalendarDay(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+  return toISODate(a) === toISODate(b)
 }
 
 export function searchDepartures(params: ScheduleSearchParams): readonly Departure[] {
@@ -100,7 +162,7 @@ export function searchDepartures(params: ScheduleSearchParams): readonly Departu
   const includePassed = params.includePassed ?? true
   const dayType = getDayType(params.date)
   const routeIds = params.routeId ? [params.routeId] : routeOptions.map((route) => route.id)
-  const currentMinute = now.getHours() * 60 + now.getMinutes()
+  const currentMinute = getBakuClockMinutes(now)
   const isToday = sameCalendarDay(params.date, now)
 
   const departures = routeIds.flatMap((routeId) => {

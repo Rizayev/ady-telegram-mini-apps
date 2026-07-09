@@ -10,6 +10,8 @@ export const routeOptions: readonly RouteOption[] = [
     accent: '#00a7d8',
     shortName: 'Pirşağı',
     description: 'Bakı, Koroğlu, Sabunçu, Pirşağı, Sumqayıt',
+    defaultFrom: 'Bakı',
+    defaultTo: 'Sumqayıt',
   },
   {
     id: 'baki_xirdalan_sumqayit',
@@ -17,6 +19,8 @@ export const routeOptions: readonly RouteOption[] = [
     accent: '#10b981',
     shortName: 'Xırdalan',
     description: 'Bakı, Dərnəgül, Biləcəri, Xırdalan',
+    defaultFrom: 'Bakı',
+    defaultTo: 'Xırdalan',
   },
 ]
 
