@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+output
+coverage
+.playwright-mcp
+.env
+.env.*
+npm-debug.log*
+.DS_Store
+.git
+.gitignore

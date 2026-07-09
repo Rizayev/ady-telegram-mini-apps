@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.server.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "outDir": "build",
+    "rootDir": ".",
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": [
+    "server",
+    "src/lib/calendar.ts",
+    "src/lib/schedule.ts",
+    "src/lib/scheduleData.ts",
+    "src/lib/types.ts",
+    "src/data/**/*.json"
+  ],
+  "exclude": ["**/*.test.ts", "**/*.test.tsx"]
+}
