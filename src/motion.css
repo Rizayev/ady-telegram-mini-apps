@@ -67,7 +67,6 @@
   .departure-filter-tabs button:hover,
   .favorite-item:hover,
   .share-action:hover,
-  .today-action:hover,
   .favorite-toggle:not(:disabled):hover {
     transform: translateY(-1px);
   }

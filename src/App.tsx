@@ -1,7 +1,6 @@
 import {
   ArrowLeftRight,
   ArrowRight,
-  CalendarDays,
   Check,
   Clock3,
   ExternalLink,
@@ -16,7 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import type { CSSProperties } from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import './motion.css'
 import { dayTypeLabel, getDayType, parseISODate, toISODate } from './lib/calendar.js'
@@ -122,7 +121,6 @@ function App() {
   const [telegramShell, setTelegramShell] = useState(() => initializeTelegramShell())
   const [isSwapping, setIsSwapping] = useState(false)
   const [departureListMode, setDepartureListMode] = useState<DepartureListMode>('upcoming')
-  const dateInputRef = useRef<HTMLInputElement>(null)
 
   const t = copy[language]
   const selectedDate = useMemo(() => parseISODate(date || toISODate(new Date())), [date])
@@ -242,17 +240,6 @@ function App() {
     setDepartureListMode(mode)
   }
 
-  function openDatePicker() {
-    hapticImpact('light')
-    dateInputRef.current?.focus()
-
-    try {
-      dateInputRef.current?.showPicker?.()
-    } catch {
-      // Some embedded browsers only open the picker after a direct input tap.
-    }
-  }
-
   return (
     <main
       className={`app-shell ${telegramShell.colorScheme === 'dark' ? 'app-shell-dark' : ''}`}
@@ -321,15 +308,9 @@ function App() {
 
         <div className="date-row">
           <label className="date-field">
-            <span>
-              <CalendarDays size={15} />
-              {t.date}
-            </span>
-            <input ref={dateInputRef} value={date} type="date" onChange={(event) => setDate(event.target.value || toISODate(new Date()))} />
+            <span>{t.date}</span>
+            <input value={date} type="date" onChange={(event) => setDate(event.target.value || toISODate(new Date()))} />
           </label>
-          <button className="today-action" type="button" aria-label={t.date} title={t.date} onClick={openDatePicker}>
-            <CalendarDays size={18} />
-          </button>
         </div>
 
         <div className="service-day" aria-label={t.dayType}>

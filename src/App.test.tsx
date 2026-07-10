@@ -28,19 +28,6 @@ describe('App', () => {
     expect(screen.queryByRole('navigation', { name: 'Route lines' })).not.toBeInTheDocument()
   })
 
-  it('opens the native date picker from the calendar action', () => {
-    const { container } = render(<App />)
-    const picker = vi.fn()
-    const dateInput = container.querySelector<HTMLInputElement>('input[type="date"]')
-
-    expect(dateInput).not.toBeNull()
-    Object.defineProperty(dateInput!, 'showPicker', { value: picker })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Date' }))
-
-    expect(picker).toHaveBeenCalledOnce()
-  })
-
   it('switches language, day type, stations, and the visible departure tab', async () => {
     render(<App />)
 

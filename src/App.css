@@ -113,7 +113,6 @@
 
 .language-tabs button,
 .swap-action,
-.today-action,
 .day-type-tabs button,
 .favorite-toggle,
 .favorite-chip,
@@ -190,7 +189,6 @@
 }
 
 .swap-action,
-.today-action,
 .favorite-toggle,
 .share-action {
   display: grid;
@@ -218,16 +216,9 @@
 
 .date-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 46px;
   gap: 8px;
   border-top: 1px solid var(--outline);
   padding: 12px;
-}
-
-.today-action {
-  align-self: end;
-  width: 46px;
-  height: 46px;
 }
 
 .service-day {
@@ -699,7 +690,6 @@
 .date-field input:focus-visible,
 .language-tabs button:focus-visible,
 .swap-action:focus-visible,
-.today-action:focus-visible,
 .day-type-tabs button:focus-visible,
 .departure-filter-tabs button:focus-visible,
 .favorite-toggle:focus-visible,
