@@ -78,11 +78,14 @@ describe('telegramThemeVariables', () => {
   it('does not call unsupported color methods on old Telegram clients', () => {
     const setHeaderColor = vi.fn()
     const setBackgroundColor = vi.fn()
-    window.Telegram = { WebApp: { version: '6.0', setHeaderColor, setBackgroundColor } }
+    const impactOccurred = vi.fn()
+    window.Telegram = { WebApp: { version: '6.0', setHeaderColor, setBackgroundColor, HapticFeedback: { impactOccurred } } }
 
     expect(initializeTelegramShell()).toMatchObject({ isTelegram: false, colorScheme: 'light' })
+    hapticImpact()
     expect(setHeaderColor).not.toHaveBeenCalled()
     expect(setBackgroundColor).not.toHaveBeenCalled()
+    expect(impactOccurred).not.toHaveBeenCalled()
   })
 
   it('uses the local fallback when Telegram is unavailable', () => {

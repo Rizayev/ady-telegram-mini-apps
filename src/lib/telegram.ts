@@ -103,5 +103,9 @@ export function initializeTelegramShell(): TelegramShell {
 }
 
 export function hapticImpact(style: HapticImpactStyle = 'light'): void {
-  getTelegramWebApp()?.HapticFeedback?.impactOccurred?.(style)
+  const webApp = getTelegramWebApp()
+
+  if (supportsVersion(webApp?.version, 6, 1)) {
+    webApp?.HapticFeedback?.impactOccurred?.(style)
+  }
 }
